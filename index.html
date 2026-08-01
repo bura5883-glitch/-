@@ -3,73 +3,422 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>水平思考クイズ - ウミガメのスープ</title>
+    <title>古着転売トラッカー — 元手1万円チャレンジ</title>
     <meta
       name="description"
-      content="はい/いいえで答えながら真相を推理する、水平思考クイズ（ウミガメのスープ）のウェブアプリ。"
+      content="元手10,000円から始める古着販売とSNS発信を管理するダッシュボード。仕入れ・販売・手数料・送料・利益・在庫・投稿・再生数・フォロワーを週次で記録する。"
     />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="site-header">
-      <h1>水平思考クイズ</h1>
-      <p class="tagline">ウミガメのスープ — はい / いいえで真相を暴け</p>
+      <div class="brand">
+        <span class="brand-mark">￥</span>
+        <div>
+          <h1>古着転売トラッカー</h1>
+          <p class="tagline">元手10,000円チャレンジ — 仕入れ・販売・SNSを1画面で管理</p>
+        </div>
+      </div>
+      <button id="theme-toggle" class="ghost-btn" type="button" aria-label="テーマ切り替え">🌓</button>
     </header>
 
-    <main id="app">
-      <!-- メニュー画面 -->
-      <section id="menu" class="screen">
-        <h2>問題を選ぶ</h2>
-        <ul id="puzzle-list" class="puzzle-list"></ul>
-        <p class="note">
-          ※ 質問判定はキーワードベースの簡易判定です。うまく伝わらない時は言い方を変えてみてください。
-        </p>
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" role="tab" data-view="dashboard">ダッシュボード</button>
+      <button class="tab" role="tab" data-view="items">商品・在庫</button>
+      <button class="tab" role="tab" data-view="sns">SNS</button>
+      <button class="tab" role="tab" data-view="weekly">週次レポート</button>
+      <button class="tab" role="tab" data-view="data">データ・計画</button>
+    </nav>
+
+    <main>
+      <!-- ダッシュボード -->
+      <section id="view-dashboard" class="view">
+        <div id="warnings" class="warnings"></div>
+
+        <section class="hero-card">
+          <p class="hero-caption">総資産（現金 + 在庫の仕入れ原価）</p>
+          <p id="hero-assets" class="hero-figure">¥0</p>
+          <p id="hero-delta" class="hero-delta"></p>
+        </section>
+
+        <div class="kpi-row" id="kpi-row"></div>
+
+        <div class="chart-grid">
+          <figure class="chart-card">
+            <figcaption>
+              <h3>総資産の推移</h3>
+              <p class="chart-sub">週の終わり時点。破線は元手10,000円のライン。</p>
+            </figcaption>
+            <div class="viz-root chart-body" id="chart-assets"></div>
+          </figure>
+
+          <figure class="chart-card">
+            <figcaption>
+              <h3>週ごとの純利益</h3>
+              <p class="chart-sub">売値 − 手数料 − 送料 − 仕入値。0より下はその週の赤字。</p>
+            </figcaption>
+            <div class="viz-root chart-body" id="chart-profit"></div>
+          </figure>
+        </div>
+
+        <section class="panel">
+          <h3>今週の投稿ノルマ</h3>
+          <p class="panel-sub" id="week-range"></p>
+          <ul class="goal-list" id="goal-list"></ul>
+        </section>
+
+        <section class="panel">
+          <h3>売れた商品ベスト5</h3>
+          <div class="table-wrap">
+            <table class="data-table" id="top-items">
+              <thead>
+                <tr>
+                  <th>商品</th>
+                  <th class="num">仕入</th>
+                  <th class="num">売値</th>
+                  <th class="num">手数料+送料</th>
+                  <th class="num">利益</th>
+                  <th class="num">回転日数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
-      <!-- プレイ画面 -->
-      <section id="play" class="screen hidden">
-        <button id="back-btn" class="link-btn" type="button">← 問題一覧に戻る</button>
-        <article class="puzzle-card">
-          <div class="puzzle-meta">
-            <span id="puzzle-difficulty" class="difficulty"></span>
-          </div>
-          <h2 id="puzzle-title"></h2>
-          <p id="puzzle-problem" class="problem"></p>
-        </article>
-
-        <section class="qa">
-          <h3>質問する</h3>
-          <form id="question-form" class="question-form" autocomplete="off">
-            <input
-              id="question-input"
-              type="text"
-              placeholder="はい / いいえで答えられる質問を入力"
-              maxlength="140"
-              required
-            />
-            <button type="submit">質問</button>
+      <!-- 商品・在庫 -->
+      <section id="view-items" class="view hidden">
+        <details class="panel form-panel" id="item-form-panel">
+          <summary><h3>仕入れを登録する</h3></summary>
+          <form id="item-form" class="grid-form" autocomplete="off">
+            <label>
+              商品名 <span class="req">必須</span>
+              <input name="name" type="text" required maxlength="60" placeholder="例：Champion リバースウィーブ" />
+            </label>
+            <label>
+              カテゴリ
+              <input name="category" type="text" list="category-list" maxlength="30" placeholder="例：スウェット" />
+            </label>
+            <datalist id="category-list">
+              <option value="Tシャツ"></option>
+              <option value="スウェット"></option>
+              <option value="パーカー"></option>
+              <option value="シャツ"></option>
+              <option value="ジャケット"></option>
+              <option value="デニム"></option>
+              <option value="パンツ"></option>
+              <option value="ニット"></option>
+              <option value="小物"></option>
+            </datalist>
+            <label>
+              ブランド
+              <input name="brand" type="text" maxlength="40" />
+            </label>
+            <label>
+              サイズ
+              <input name="size" type="text" maxlength="20" placeholder="例：L" />
+            </label>
+            <label>
+              状態 <span class="req">必須</span>
+              <select name="condition" required></select>
+            </label>
+            <label class="wide">
+              状態メモ（正確に記載する）
+              <input name="conditionNote" type="text" maxlength="120" placeholder="例：右袖に小さなシミ、プリント割れあり" />
+            </label>
+            <label>
+              仕入れ先 <span class="req">必須</span>
+              <select name="source" required></select>
+            </label>
+            <label>
+              エリア
+              <select name="area"></select>
+            </label>
+            <label>
+              仕入れ値（円） <span class="req">必須</span>
+              <input name="purchasePrice" type="number" min="0" step="1" required />
+            </label>
+            <label>
+              仕入れ日 <span class="req">必須</span>
+              <input name="purchaseDate" type="date" required />
+            </label>
+            <label>
+              想定売値（円）
+              <input name="listPrice" type="number" min="0" step="1" />
+            </label>
+            <label class="check wide">
+              <input name="authenticityChecked" type="checkbox" />
+              正規品であることを確認した（偽物・コピー品は取り扱わない）
+            </label>
+            <p class="form-note" id="cash-note"></p>
+            <div class="form-actions">
+              <button type="submit">仕入れを登録</button>
+            </div>
           </form>
+        </details>
 
-          <div id="history" class="history" aria-live="polite"></div>
-
-          <div class="actions">
-            <button id="hint-btn" type="button">💡 ヒント</button>
-            <button id="answer-btn" type="button" class="danger">🔓 答えを見る</button>
+        <section class="panel">
+          <div class="panel-head">
+            <h3>商品一覧</h3>
+            <div class="filters">
+              <button class="chip is-active" data-filter="all" type="button">すべて</button>
+              <button class="chip" data-filter="stock" type="button">在庫</button>
+              <button class="chip" data-filter="sold" type="button">売却済み</button>
+            </div>
           </div>
+          <div class="table-wrap">
+            <table class="data-table" id="items-table">
+              <thead>
+                <tr>
+                  <th>商品</th>
+                  <th>状態</th>
+                  <th>仕入れ先</th>
+                  <th class="num">仕入</th>
+                  <th>仕入日</th>
+                  <th class="num">売値</th>
+                  <th class="num">利益</th>
+                  <th>ステータス</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty-msg hidden" id="items-empty">まだ商品がありません。「仕入れを登録する」から追加してください。</p>
+        </section>
+      </section>
 
-          <details id="answer-box" class="answer-box" hidden>
-            <summary>真相</summary>
-            <p id="answer-text"></p>
-          </details>
+      <!-- SNS -->
+      <section id="view-sns" class="view hidden">
+        <div class="chart-grid">
+          <figure class="chart-card">
+            <figcaption>
+              <h3>フォロワー数の推移</h3>
+              <p class="chart-sub">各プラットフォームの記録した数値。線の端に名前を表示。</p>
+            </figcaption>
+            <div class="viz-root chart-body" id="chart-followers"></div>
+            <div class="legend" id="follower-legend"></div>
+          </figure>
+
+          <figure class="chart-card">
+            <figcaption>
+              <h3>週ごとの総再生数</h3>
+              <p class="chart-sub">その週に投稿した動画の再生数の合計。</p>
+            </figcaption>
+            <div class="viz-root chart-body" id="chart-views"></div>
+          </figure>
+        </div>
+
+        <details class="panel form-panel">
+          <summary><h3>投稿を記録する</h3></summary>
+          <form id="post-form" class="grid-form" autocomplete="off">
+            <label>
+              投稿日 <span class="req">必須</span>
+              <input name="date" type="date" required />
+            </label>
+            <label>
+              プラットフォーム <span class="req">必須</span>
+              <select name="platform" required></select>
+            </label>
+            <label class="wide">
+              タイトル・内容
+              <input name="title" type="text" maxlength="80" placeholder="例：1万円チャレンジ #3 仕入れ編" />
+            </label>
+            <label>
+              再生数
+              <input name="views" type="number" min="0" step="1" />
+            </label>
+            <div class="form-actions">
+              <button type="submit">投稿を記録</button>
+            </div>
+          </form>
+        </details>
+
+        <details class="panel form-panel">
+          <summary><h3>フォロワー数を記録する</h3></summary>
+          <form id="follower-form" class="grid-form" autocomplete="off">
+            <label>
+              計測日 <span class="req">必須</span>
+              <input name="date" type="date" required />
+            </label>
+            <label>
+              プラットフォーム <span class="req">必須</span>
+              <select name="platform" required></select>
+            </label>
+            <label>
+              フォロワー数 <span class="req">必須</span>
+              <input name="count" type="number" min="0" step="1" required />
+            </label>
+            <div class="form-actions">
+              <button type="submit">記録する</button>
+            </div>
+          </form>
+        </details>
+
+        <section class="panel">
+          <h3>投稿履歴</h3>
+          <div class="table-wrap">
+            <table class="data-table" id="posts-table">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>プラットフォーム</th>
+                  <th>タイトル</th>
+                  <th class="num">再生数</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty-msg hidden" id="posts-empty">まだ投稿の記録がありません。</p>
+        </section>
+
+        <section class="panel">
+          <h3>フォロワー記録</h3>
+          <div class="table-wrap">
+            <table class="data-table" id="followers-table">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>プラットフォーム</th>
+                  <th class="num">フォロワー数</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty-msg hidden" id="followers-empty">まだフォロワーの記録がありません。</p>
+        </section>
+      </section>
+
+      <!-- 週次レポート -->
+      <section id="view-weekly" class="view hidden">
+        <section class="panel">
+          <div class="panel-head">
+            <h3>週次レポート</h3>
+            <button id="csv-btn" class="ghost-btn" type="button">CSVで書き出す</button>
+          </div>
+          <p class="panel-sub">
+            事業計画書の「管理項目」を週単位（月曜〜日曜）で集計しています。チャートと同じ数値の表なので、色が見分けにくい場合はこちらを参照してください。
+          </p>
+          <div class="table-wrap">
+            <table class="data-table" id="weekly-table">
+              <thead>
+                <tr>
+                  <th>週</th>
+                  <th class="num">現金残高</th>
+                  <th class="num">仕入金額</th>
+                  <th class="num">販売金額</th>
+                  <th class="num">手数料</th>
+                  <th class="num">送料</th>
+                  <th class="num">利益</th>
+                  <th class="num">総利益</th>
+                  <th class="num">在庫数</th>
+                  <th class="num">投稿本数</th>
+                  <th class="num">再生数</th>
+                  <th class="num">フォロワー</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty-msg hidden" id="weekly-empty">まだ記録がありません。</p>
+        </section>
+      </section>
+
+      <!-- データ・計画 -->
+      <section id="view-data" class="view hidden">
+        <section class="panel">
+          <h3>データの保存先</h3>
+          <p class="panel-sub">
+            記録はこのブラウザの中だけに保存されます。端末を変える前や、消えると困るタイミングでJSONを書き出してください。
+          </p>
+          <div class="form-actions">
+            <button id="export-btn" type="button">JSONを書き出す</button>
+            <button id="import-btn" class="ghost-btn" type="button">JSONを読み込む</button>
+            <button id="reset-btn" class="danger-btn" type="button">すべて削除</button>
+            <input id="import-file" type="file" accept="application/json" hidden />
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>運営ルール</h3>
+          <ul class="rule-list">
+            <li>元手は<strong>10,000円のみ</strong>。追加資金は投入しない。</li>
+            <li>利益のみで運営を継続する。</li>
+            <li>偽物・コピー品は取り扱わない。</li>
+            <li>商品状態は正確に記載する。</li>
+            <li>手数料・送料を含めて利益を管理する。</li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <h3>活動スケジュール</h3>
+          <dl class="schedule">
+            <dt>平日・土曜日</dt>
+            <dd>商品リサーチ / 仕入れ / 撮影 / 出品準備</dd>
+            <dt>日曜日</dt>
+            <dd>商品販売 / 結果撮影 / 動画編集 / SNS投稿</dd>
+          </dl>
+        </section>
+
+        <section class="panel">
+          <h3>再生数が伸びないときの対策</h3>
+          <ul class="rule-list">
+            <li>冒頭の構成を改善する。</li>
+            <li>タイトル・テロップを工夫する。</li>
+            <li>投稿データを分析し、改善を繰り返す。</li>
+          </ul>
+          <p class="panel-sub">
+            週次レポートの「投稿本数」と「再生数」を並べて見ると、本数と再生数のどちらがボトルネックか判断できます。
+          </p>
         </section>
       </section>
     </main>
 
+    <!-- 販売登録ダイアログ -->
+    <dialog id="sell-dialog">
+      <form id="sell-form" method="dialog" class="grid-form">
+        <h3 id="sell-title">販売を登録</h3>
+        <p class="panel-sub" id="sell-item-info"></p>
+        <label>
+          販売先 <span class="req">必須</span>
+          <select name="channel" required></select>
+        </label>
+        <label>
+          売値（円） <span class="req">必須</span>
+          <input name="salePrice" type="number" min="0" step="1" required />
+        </label>
+        <label>
+          手数料（円）
+          <input name="fee" type="number" min="0" step="1" />
+        </label>
+        <label>
+          送料（円）
+          <input name="shipping" type="number" min="0" step="1" />
+        </label>
+        <label>
+          売却日 <span class="req">必須</span>
+          <input name="saleDate" type="date" required />
+        </label>
+        <p class="form-note" id="sell-preview"></p>
+        <div class="form-actions">
+          <button type="submit" value="ok">登録する</button>
+          <button type="button" class="ghost-btn" id="sell-cancel">キャンセル</button>
+        </div>
+      </form>
+    </dialog>
+
     <footer class="site-footer">
-      <small>© 水平思考クイズ — Powered by static web.</small>
+      <small>古着転売トラッカー — データはこの端末のブラウザ内にのみ保存されます。</small>
     </footer>
 
-    <script src="puzzles.js"></script>
-    <script src="script.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/calc.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
   </body>
 </html>
