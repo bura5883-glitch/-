@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>水平思考クイズ - ウミガメのスープ</title>
+    <meta
+      name="description"
+      content="はい/いいえで答えながら真相を推理する、水平思考クイズ（ウミガメのスープ）のウェブアプリ。"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>水平思考クイズ</h1>
+      <p class="tagline">ウミガメのスープ — はい / いいえで真相を暴け</p>
+    </header>
+
+    <main id="app">
+      <!-- メニュー画面 -->
+      <section id="menu" class="screen">
+        <h2>問題を選ぶ</h2>
+        <ul id="puzzle-list" class="puzzle-list"></ul>
+        <p class="note">
+          ※ 質問判定はキーワードベースの簡易判定です。うまく伝わらない時は言い方を変えてみてください。
+        </p>
+      </section>
+
+      <!-- プレイ画面 -->
+      <section id="play" class="screen hidden">
+        <button id="back-btn" class="link-btn" type="button">← 問題一覧に戻る</button>
+        <article class="puzzle-card">
+          <div class="puzzle-meta">
+            <span id="puzzle-difficulty" class="difficulty"></span>
+          </div>
+          <h2 id="puzzle-title"></h2>
+          <p id="puzzle-problem" class="problem"></p>
+        </article>
+
+        <section class="qa">
+          <h3>質問する</h3>
+          <form id="question-form" class="question-form" autocomplete="off">
+            <input
+              id="question-input"
+              type="text"
+              placeholder="はい / いいえで答えられる質問を入力"
+              maxlength="140"
+              required
+            />
+            <button type="submit">質問</button>
+          </form>
+
+          <div id="history" class="history" aria-live="polite"></div>
+
+          <div class="actions">
+            <button id="hint-btn" type="button">💡 ヒント</button>
+            <button id="answer-btn" type="button" class="danger">🔓 答えを見る</button>
+          </div>
+
+          <details id="answer-box" class="answer-box" hidden>
+            <summary>真相</summary>
+            <p id="answer-text"></p>
+          </details>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <small>© 水平思考クイズ — Powered by static web.</small>
+    </footer>
+
+    <script src="puzzles.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
